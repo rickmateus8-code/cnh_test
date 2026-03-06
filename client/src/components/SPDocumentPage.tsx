@@ -176,7 +176,12 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
 
       {/* DADOS DO ALUNO */}
       <table style={{ width: "100%", borderCollapse: "collapse", borderLeft: bT, borderRight: bT, borderBottom: bT, tableLayout: "fixed" }}>
-        <colgroup><col style={{ width: "15%" }} /><col style={{ width: "40%" }} /><col style={{ width: "23%" }} /><col style={{ width: "22%" }} /></colgroup>
+        <colgroup>
+          <col style={{ width: "18.3%" }} />
+          <col style={{ width: "34.5%" }} />
+          <col style={{ width: "25.2%" }} />
+          <col style={{ width: "22.0%" }} />
+        </colgroup>
         <tbody>
           <tr>
             <td colSpan={2} style={cellS({ padding: "2px 4px", fontSize: "10pt" })}><b>Nome do Aluno</b>: <V val={aluno} orig="GIOVANE SILVA DOS SANTOS" hl={hl} /></td>
@@ -191,7 +196,8 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
           </tr>
           <tr>
             <td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}><b>Data:</b> <V val={f.data_nascimento} orig="01/12/1999" hl={hl} /></td>
-            <td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}></td><td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}></td>
+            <td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}></td>
+            <td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}></td>
           </tr>
         </tbody>
       </table>
