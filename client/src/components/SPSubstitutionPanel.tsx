@@ -162,11 +162,23 @@ export default function SPSubstitutionPanel({
       </div>
 
       {/* Fields */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 overflow-y-auto" style={{ height: "calc(100vh - 350px)" }}>
         <div className="p-3 space-y-2">
           {categories.map((cat) => {
             const meta = CATEGORY_META[cat];
-            const catFields = fields.filter((f) => f.category === cat);
+            // Filtra campos redundantes para o usuário (serão preenchidos automaticamente)
+            const catFields = fields.filter((f) => {
+              if (f.category !== cat) return false;
+              // Remove campos de escola e município das séries que agora são automáticos
+              const redundantIds = [
+                "escola_fund", "municipio_fund",
+                "escola_1a", "municipio_1a",
+                "escola_2a", "municipio_2a",
+                "escola_3a", "municipio_3a",
+                "ano_conclusao", "registro_gdae"
+              ];
+              return !redundantIds.includes(f.id);
+            });
             const isExpanded = expandedCategory === cat;
             const Icon = meta.icon;
             return (

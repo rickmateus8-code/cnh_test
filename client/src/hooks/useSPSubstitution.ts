@@ -18,6 +18,31 @@ export function useSPSubstitution() {
     for (const f of fields) {
       map[f.id] = f.currentValue;
     }
+    
+    // --- LÓGICA DE SINCRONIZAÇÃO AUTOMÁTICA ---
+    // 1. Escola e Município das séries seguem a Instituição se não preenchidos
+    const escolaBase = map.nome_escola || "E. E. Mª APDA. FRANÇA B. ARAUJO PROFª";
+    const municipioBase = map.municipio_escola || "Cacapava";
+    
+    // Sincroniza campos de escola em todas as séries
+    ["escola_fund", "escola_1a", "escola_2a", "escola_3a"].forEach(id => {
+      if (!map[id]) map[id] = escolaBase;
+    });
+    
+    // Sincroniza campos de município em todas as séries
+    ["municipio_fund", "municipio_1a", "municipio_2a", "municipio_3a"].forEach(id => {
+      if (!map[id]) map[id] = municipioBase;
+    });
+
+    // 2. Ano de Conclusão e Registro GDAE seguem o ano da 3ª Série
+    if (map.ano_3a_serie) {
+      map.ano_conclusao = map.ano_3a_serie;
+      // Atualiza o sufixo do GDAE se necessário ou mantém o padrão
+      const baseGdae = (map.registro_gdae || "SPS41214853-0SP").split("-")[0];
+      const uf = map.estado_nascimento || "SP";
+      map.registro_gdae = `${baseGdae}-0${uf}`;
+    }
+
     return map;
   }, [fields]);
 
