@@ -1,0 +1,283 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-gold: oklch(0.82 0.14 85);
+  --color-gold-foreground: oklch(0.15 0.02 85);
+  --color-gold-muted: oklch(0.65 0.12 85);
+}
+
+:root {
+  --radius: 0.625rem;
+  /* Dark theme as default */
+  --background: oklch(0.12 0.005 260);
+  --foreground: oklch(0.93 0.005 260);
+  --card: oklch(0.16 0.008 260);
+  --card-foreground: oklch(0.93 0.005 260);
+  --popover: oklch(0.18 0.008 260);
+  --popover-foreground: oklch(0.93 0.005 260);
+  --primary: oklch(0.82 0.14 85);
+  --primary-foreground: oklch(0.15 0.02 85);
+  --secondary: oklch(0.22 0.008 260);
+  --secondary-foreground: oklch(0.85 0.005 260);
+  --muted: oklch(0.22 0.008 260);
+  --muted-foreground: oklch(0.65 0.01 260);
+  --accent: oklch(0.20 0.008 260);
+  --accent-foreground: oklch(0.93 0.005 260);
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.28 0.008 260);
+  --input: oklch(0.24 0.008 260);
+  --ring: oklch(0.82 0.14 85);
+  --chart-1: oklch(0.82 0.14 85);
+  --chart-2: oklch(0.70 0.12 85);
+  --chart-3: oklch(0.58 0.10 85);
+  --chart-4: oklch(0.46 0.08 85);
+  --chart-5: oklch(0.34 0.06 85);
+  --sidebar: oklch(0.10 0.005 260);
+  --sidebar-foreground: oklch(0.90 0.005 260);
+  --sidebar-primary: oklch(0.82 0.14 85);
+  --sidebar-primary-foreground: oklch(0.15 0.02 85);
+  --sidebar-accent: oklch(0.18 0.008 260);
+  --sidebar-accent-foreground: oklch(0.93 0.005 260);
+  --sidebar-border: oklch(0.25 0.008 260);
+  --sidebar-ring: oklch(0.82 0.14 85);
+}
+
+.dark {
+  --background: oklch(0.12 0.005 260);
+  --foreground: oklch(0.93 0.005 260);
+  --card: oklch(0.16 0.008 260);
+  --card-foreground: oklch(0.93 0.005 260);
+  --popover: oklch(0.18 0.008 260);
+  --popover-foreground: oklch(0.93 0.005 260);
+  --primary: oklch(0.82 0.14 85);
+  --primary-foreground: oklch(0.15 0.02 85);
+  --secondary: oklch(0.22 0.008 260);
+  --secondary-foreground: oklch(0.85 0.005 260);
+  --muted: oklch(0.22 0.008 260);
+  --muted-foreground: oklch(0.65 0.01 260);
+  --accent: oklch(0.20 0.008 260);
+  --accent-foreground: oklch(0.93 0.005 260);
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.28 0.008 260);
+  --input: oklch(0.24 0.008 260);
+  --ring: oklch(0.82 0.14 85);
+  --chart-1: oklch(0.82 0.14 85);
+  --chart-2: oklch(0.70 0.12 85);
+  --chart-3: oklch(0.58 0.10 85);
+  --chart-4: oklch(0.46 0.08 85);
+  --chart-5: oklch(0.34 0.06 85);
+  --sidebar: oklch(0.10 0.005 260);
+  --sidebar-foreground: oklch(0.90 0.005 260);
+  --sidebar-primary: oklch(0.82 0.14 85);
+  --sidebar-primary-foreground: oklch(0.15 0.02 85);
+  --sidebar-accent: oklch(0.18 0.008 260);
+  --sidebar-accent-foreground: oklch(0.93 0.005 260);
+  --sidebar-border: oklch(0.25 0.008 260);
+  --sidebar-ring: oklch(0.82 0.14 85);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      max-width: 1280px;
+    }
+  }
+}
+
+/*
+ * Document page styles — faithful to PDF CropBox [0,0,587.84,831.32]
+ * 587.84pt = 207.53mm, 831.32pt = 293.47mm
+ * Using exact PDF dimensions for pixel-consistent rendering
+ */
+.doc-page {
+  width: 207.53mm;
+  height: 293.47mm;
+  min-height: 293.47mm;
+  max-height: 293.47mm;
+  background: white;
+  padding: 18mm 22mm 15mm 22mm;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 11pt;
+  line-height: 1.35;
+  color: #000;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Fieldset-style boxes with legend */
+.doc-page .fieldset-box {
+  border: 1px solid #000;
+  padding: 8px 10px;
+  margin: 8px 0;
+  position: relative;
+}
+
+.doc-page .fieldset-box .legend {
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  background: #fff;
+  padding: 0 5px;
+  font-weight: bold;
+  font-size: 10pt;
+}
+
+/* Grade/discipline tables */
+.doc-page .grade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8pt;
+  margin-top: 4px;
+}
+
+.doc-page .grade-table th {
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 1px solid #000;
+  padding: 2px 4px;
+  font-size: 8pt;
+}
+
+.doc-page .grade-table td {
+  padding: 2px 4px;
+  border-bottom: 0.5px solid #ccc;
+  vertical-align: top;
+  font-size: 8pt;
+}
+
+/* Editable field highlight */
+.editable-field {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.editable-field.modified {
+  background-color: rgba(232, 163, 23, 0.12);
+  border-radius: 2px;
+}
+
+/* Print/PDF styles */
+@media print {
+  body {
+    margin: 0;
+    background: white !important;
+    color: #000 !important;
+  }
+  .doc-page {
+    margin: 0;
+    padding: 18mm 22mm 15mm 22mm;
+    page-break-after: always;
+    box-shadow: none;
+    background: white !important;
+    color: #000 !important;
+  }
+  .doc-page:last-child {
+    page-break-after: auto;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Force RGB colors on doc-page elements for html2canvas compatibility */
+.doc-page,
+.doc-page * {
+  color: #000;
+  border-color: #000;
+}
+
+.doc-page .fieldset-box {
+  border-color: #000;
+}
+
+.doc-page .grade-table th {
+  border-bottom-color: #000;
+}
+
+.doc-page .grade-table td {
+  border-bottom-color: #ccc;
+}

@@ -1,0 +1,41 @@
+# DocMaster - Sistema de Documentos TODO
+
+- [x] Configurar tema escuro com acentos dourados no index.css
+- [x] Criar schema do banco de dados (profiles, documents, document_history)
+- [x] Executar migrações SQL
+- [x] Configurar rotas no App.tsx (Dashboard, Histórico, Diploma, Perfis)
+- [x] Criar Dashboard com sidebar escuro estilo ELITEDOC
+- [x] Implementar lista de documentos com abas por tipo
+- [x] Implementar busca por nome/CPF
+- [x] Implementar ações (PDF, Editar, Excluir) nos documentos
+- [x] Criar sistema de gerenciamento de perfis (CRUD)
+- [x] Criar formulário de criação/edição de perfil
+- [x] Implementar alternância entre perfis
+- [x] Migrar Histórico Viewer como módulo de documento
+- [x] Manter painel lateral de substituição de dados
+- [x] Criar formulário de Diploma (6 seções do Emissor Uninter)
+- [x] Seção 1: Dados do Diplomado
+- [x] Seção 2: Curso, Autorização e Reconhecimento
+- [x] Seção 3: Endereço de Oferta do Curso
+- [x] Seção 4: Instituição e Mantenedora
+- [x] Seção 5: Registro e Responsável
+- [x] Seção 6: Assinaturas e Signatários
+- [x] Implementar exportação PDF com base64 (logo, selo, assinatura)
+- [x] Aplicar dados de THAIS (datas, endereço, atos regulatórios, cronologia)
+- [x] Página de seleção de tipo de documento (cards visuais)
+- [x] Interface responsiva e tema consistente
+- [x] Testes vitest para rotas do backend
+- [x] Bug: Login mostra "login realizado com sucesso" mas não redireciona para o Dashboard
+- [x] Bug: Histórico UNINTER - visualização está horrível, restaurar ao estado funcional
+- [x] Bug: Histórico UNINTER - exportação PDF dá "erro ao exportar"
+- [x] Correção THAIS INC-001: Instituição POLO TIRADENTES (CENTRO) - PR em vez de CAMPINAS
+- [x] Correção THAIS INC-002: Rodapé unidade coerente com endereço Curitiba/PR
+- [x] Correção THAIS INC-003: Data rodapé 2022 em vez de 2019
+- [x] Correção THAIS INC-004: Recredenciamento Portaria 1.219 de 28/11/2019
+- [x] Correção THAIS INC-005: Reconhecimento Portaria 913 de 27/12/2018 DOU 245
+- [x] Correção THAIS INC-006: Expedição diploma e histórico 15/08/2022 em vez de 30/07/2022
+- [x] Correção THAIS INC-007: Separar endereço unidade/oferta e mantenedora
+- [x] Adicionar perfil Pedagogia ao documentData.ts com dados acadêmicos e disciplinas
+- [x] Atualizar Historico.tsx para suportar múltiplos perfis de curso com botões dinâmicos
+- [x] Atualizar DocumentPages.tsx para renderizar dados condicionais por curso (Pedagogia vs História)
+- [x] Testar visualização e exportação PDF do perfil Pedagogia
