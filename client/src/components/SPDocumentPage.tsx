@@ -182,7 +182,7 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
                   <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff }}>
                     Endereço: <V val={f.endereco_escola} orig="Av. Honorio Ferreira Pedrosa" hl={hl} />
                   </td>
-                  <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff, borderLeft: b, textAlign: "right" }}>
+                  <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff, borderLeft: b, textAlign: "left" }}>
                     Nº <V val={f.numero_escola} orig="611" hl={hl} />
                   </td>
                 </tr></tbody>
