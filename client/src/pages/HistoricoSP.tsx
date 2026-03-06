@@ -101,13 +101,13 @@ export default function HistoricoSP() {
     max-height: 297mm !important;
     overflow: hidden !important;
     background: white !important;
-    padding: 8mm 10mm !important;
+    padding: 9.9mm 12.7mm 25mm 14.5mm !important;
   }
   table { border-collapse: collapse; }
   td, th { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   /* Remove highlight styles for print */
-  [style*="border-bottom-color: #22c55e"] { border-bottom-color: transparent !important; }
-  [style*="border-bottom: 2px solid #22c55e"] { border-bottom: none !important; }
+  [style*="border-bottom: 2px solid #2d8c4e"] { border-bottom: none !important; }
+  [style*="background-color: rgba(45,140,78,0.08)"] { background-color: transparent !important; }
   @media print {
     body { width: 210mm; height: 297mm; }
     .doc-page-sp {
