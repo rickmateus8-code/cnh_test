@@ -1,15 +1,13 @@
 import { useState, useCallback, useMemo } from "react";
 import {
   GIOVANNE_PROFILE,
-  SP_PROFILES,
   createSPSubstitutionFields,
   type SPSubstitutionField,
-  type SPProfileKey,
   type SPGradeRow,
+  SP_GRADES_DEFAULT,
 } from "@/lib/historicoSPData";
 
 export function useSPSubstitution() {
-  const [activeProfile, setActiveProfile] = useState<SPProfileKey>("giovanne");
   const [fields, setFields] = useState<SPSubstitutionField[]>(
     createSPSubstitutionFields(GIOVANNE_PROFILE)
   );
@@ -27,16 +25,7 @@ export function useSPSubstitution() {
     return fields.filter((f) => f.currentValue !== f.originalValue).length;
   }, [fields]);
 
-  const currentGrades: SPGradeRow[] = useMemo(() => {
-    return SP_PROFILES[activeProfile].grades;
-  }, [activeProfile]);
-
-  const applyProfile = useCallback((profileKey: SPProfileKey) => {
-    const profile = SP_PROFILES[profileKey];
-    if (!profile) return;
-    setActiveProfile(profileKey);
-    setFields(createSPSubstitutionFields(profile));
-  }, []);
+  const currentGrades: SPGradeRow[] = SP_GRADES_DEFAULT;
 
   const updateField = useCallback((fieldId: string, newValue: string) => {
     setFields((prev) =>
@@ -46,7 +35,6 @@ export function useSPSubstitution() {
 
   const resetToOriginal = useCallback(() => {
     setFields(createSPSubstitutionFields(GIOVANNE_PROFILE));
-    setActiveProfile("giovanne");
     setBrasaoUrl("");
   }, []);
 
@@ -58,11 +46,9 @@ export function useSPSubstitution() {
   return {
     fields,
     fieldMap,
-    activeProfile,
     modifiedCount,
     currentGrades,
     brasaoUrl,
-    applyProfile,
     updateField,
     resetToOriginal,
     handleBrasaoUpload,

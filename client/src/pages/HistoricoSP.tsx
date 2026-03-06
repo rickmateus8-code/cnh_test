@@ -1,12 +1,10 @@
 /**
  * Histórico São Paulo - Document Viewer
  * Réplica do histórico escolar SP com campos editáveis
- * Export: PDF via jsPDF + html2canvas (direto, sem iframe)
- * Logo: via upload (PNG sem fundo)
+ * Export: window.print() with base64 embedded images
  */
-import { useLocalAuth } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft, Download, ZoomIn, ZoomOut,
@@ -17,54 +15,121 @@ import { Separator } from "@/components/ui/separator";
 import { useSPSubstitution } from "@/hooks/useSPSubstitution";
 import SPSubstitutionPanel from "@/components/SPSubstitutionPanel";
 import { SPPage1 } from "@/components/SPDocumentPage";
-import { SP_PROFILES } from "@/lib/historicoSPData";
-
-const PAGE_WIDTH_MM = 210;
-const PAGE_HEIGHT_MM = 297;
 
 export default function HistoricoSP() {
-  const { isAuthenticated, loading: authLoading } = useLocalAuth();
   const [, setLocation] = useLocation();
   const [zoom, setZoom] = useState(0.72);
   const [showHighlights, setShowHighlights] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const printRef = useRef<HTMLDivElement>(null);
 
   const {
-    fields, fieldMap, activeProfile, modifiedCount,
+    fields, fieldMap, modifiedCount,
     currentGrades, brasaoUrl,
-    applyProfile, updateField, resetToOriginal, handleBrasaoUpload
+    updateField, resetToOriginal, handleBrasaoUpload
   } = useSPSubstitution();
+
+  // Signature upload state
+  const [assinaturaGerenteUrl, setAssinaturaGerenteUrl] = useState<string | null>(null);
+  const [assinaturaDiretorUrl, setAssinaturaDiretorUrl] = useState<string | null>(null);
+
+  const handleAssinaturaGerenteUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setAssinaturaGerenteUrl(e.target?.result as string);
+      toast.success("Assinatura do Gerente carregada!");
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleAssinaturaDiretorUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setAssinaturaDiretorUrl(e.target?.result as string);
+      toast.success("Assinatura do Diretor carregada!");
+    };
+    reader.readAsDataURL(file);
+  }, []);
 
   const handleExportPDF = useCallback(async () => {
     setIsExporting(true);
-    toast.info("Gerando PDF...");
     try {
-      const { default: jsPDF } = await import("jspdf");
-      const { default: html2canvas } = await import("html2canvas-pro");
-
-      const container = printRef.current;
-      if (!container) {
-        toast.error("Container de impressão não encontrado");
-        setIsExporting(false);
-        return;
-      }
-
-      const docPage = container.querySelector(".doc-page-sp") as HTMLElement;
+      const docPage = document.getElementById("doc-page-sp-1");
       if (!docPage) {
-        toast.error("Nenhuma página encontrada");
+        toast.error("Documento não encontrado");
         setIsExporting(false);
         return;
       }
 
-      const origStyle = container.style.cssText;
-      container.style.cssText = `position:fixed;left:0;top:0;z-index:99999;background:white;width:${PAGE_WIDTH_MM}mm;`;
-      await new Promise((r) => setTimeout(r, 300));
+      // Clone the document HTML (images are already base64 embedded)
+      const docHTML = docPage.outerHTML;
 
-      const images = docPage.querySelectorAll("img");
+      const printWindow = window.open("", "_blank", "width=794,height=1123");
+      if (!printWindow) {
+        toast.error("Popup bloqueado. Permita popups para exportar.");
+        setIsExporting(false);
+        return;
+      }
+
+      const studentName = (fieldMap.nome_aluno || "Documento").replace(/\s+/g, "_");
+
+      printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<title>Historico_Escolar_SP_${studentName}</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    background: white;
+    font-family: Arial, Helvetica, sans-serif;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  .doc-page-sp {
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+    background: white !important;
+    padding: 8mm 10mm !important;
+  }
+  table { border-collapse: collapse; }
+  td, th { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* Remove highlight styles for print */
+  [style*="border-bottom-color: #22c55e"] { border-bottom-color: transparent !important; }
+  [style*="border-bottom: 2px solid #22c55e"] { border-bottom: none !important; }
+  @media print {
+    body { width: 210mm; height: 297mm; }
+    .doc-page-sp {
+      width: 210mm !important;
+      height: 297mm !important;
+      page-break-after: avoid;
+    }
+  }
+</style>
+</head>
+<body>${docHTML}</body>
+</html>`);
+
+      printWindow.document.close();
+
+      // Wait for content to render
+      await new Promise((r) => setTimeout(r, 1000));
+
+      // Wait for all images to load
+      const imgs = printWindow.document.querySelectorAll("img");
       await Promise.all(
-        Array.from(images).map(
+        Array.from(imgs).map(
           (img) =>
             new Promise<void>((resolve) => {
               if (img.complete && img.naturalWidth > 0) resolve();
@@ -76,43 +141,10 @@ export default function HistoricoSP() {
         )
       );
 
-      toast.info("Processando página...");
+      await new Promise((r) => setTimeout(r, 500));
+      printWindow.print();
 
-      const canvas = await html2canvas(docPage, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        width: docPage.scrollWidth,
-        height: docPage.scrollHeight,
-      });
-
-      container.style.cssText = origStyle;
-
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: [PAGE_WIDTH_MM, PAGE_HEIGHT_MM],
-      });
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.98);
-      pdf.addImage(imgData, "JPEG", 0, 0, PAGE_WIDTH_MM, PAGE_HEIGHT_MM);
-
-      const profileInfo = SP_PROFILES[activeProfile];
-      const filename = `Historico_Escolar_SP_${profileInfo.name.replace(/\s+/g, "_")}.pdf`;
-
-      const pdfDataUri = pdf.output("datauristring");
-      const link = document.createElement("a");
-      link.href = pdfDataUri;
-      link.download = filename;
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-      }, 2000);
-      toast.success("PDF exportado com sucesso!");
+      toast.success("Janela de impressão aberta! Selecione 'Salvar como PDF'.");
     } catch (err) {
       console.error("PDF export error:", err);
       toast.error(
@@ -122,7 +154,7 @@ export default function HistoricoSP() {
     } finally {
       setIsExporting(false);
     }
-  }, [activeProfile]);
+  }, [fieldMap]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#0a0a0f]">
@@ -167,13 +199,15 @@ export default function HistoricoSP() {
           <aside className="w-80 border-r border-[#1a1a2a] bg-[#0d0d14] shrink-0 flex flex-col overflow-hidden">
             <SPSubstitutionPanel
               fields={fields}
-              activeProfile={activeProfile}
               modifiedCount={modifiedCount}
-              onApplyProfile={applyProfile}
               onUpdateField={updateField}
               onReset={resetToOriginal}
               onBrasaoUpload={handleBrasaoUpload}
               brasaoUrl={brasaoUrl}
+              onAssinaturaGerenteUpload={handleAssinaturaGerenteUpload}
+              onAssinaturaDiretorUpload={handleAssinaturaDiretorUpload}
+              assinaturaGerenteUrl={assinaturaGerenteUrl}
+              assinaturaDiretorUrl={assinaturaDiretorUrl}
             />
           </aside>
         )}
@@ -204,23 +238,13 @@ export default function HistoricoSP() {
                   highlightModified={showHighlights}
                   grades={currentGrades}
                   brasaoUrl={brasaoUrl || undefined}
+                  assinaturaGerenteUrl={assinaturaGerenteUrl || undefined}
+                  assinaturaDiretorUrl={assinaturaDiretorUrl || undefined}
                 />
               </div>
             </div>
           </div>
         </main>
-      </div>
-
-      {/* Hidden container for PDF export */}
-      <div
-        ref={printRef}
-        style={{ position: "fixed", left: "-9999px", top: 0, width: `${PAGE_WIDTH_MM}mm`, background: "white", color: "#000" }}
-      >
-        <SPPage1
-          f={fieldMap}
-          grades={currentGrades}
-          brasaoUrl={brasaoUrl || undefined}
-        />
       </div>
     </div>
   );

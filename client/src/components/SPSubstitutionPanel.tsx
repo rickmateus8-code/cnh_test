@@ -3,17 +3,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RotateCcw, User, Building2, GraduationCap, FileCheck, PenTool, Upload, Image } from "lucide-react";
-import type { SPSubstitutionField, SPProfileKey } from "@/lib/historicoSPData";
+import type { SPSubstitutionField } from "@/lib/historicoSPData";
 
 interface Props {
   fields: SPSubstitutionField[];
-  activeProfile: SPProfileKey;
   modifiedCount: number;
-  onApplyProfile: (key: SPProfileKey) => void;
   onUpdateField: (id: string, value: string) => void;
   onReset: () => void;
   onBrasaoUpload: (file: File) => void;
   brasaoUrl?: string;
+  onAssinaturaGerenteUpload?: (file: File) => void;
+  onAssinaturaDiretorUpload?: (file: File) => void;
+  assinaturaGerenteUrl?: string | null;
+  assinaturaDiretorUrl?: string | null;
 }
 
 const CATEGORY_META: Record<string, { label: string; icon: React.ElementType }> = {
@@ -26,48 +28,29 @@ const CATEGORY_META: Record<string, { label: string; icon: React.ElementType }> 
 
 export default function SPSubstitutionPanel({
   fields,
-  activeProfile,
   modifiedCount,
-  onApplyProfile,
   onUpdateField,
   onReset,
   onBrasaoUpload,
   brasaoUrl,
+  onAssinaturaGerenteUpload,
+  onAssinaturaDiretorUpload,
+  assinaturaGerenteUrl,
+  assinaturaDiretorUrl,
 }: Props) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>("aluno");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const gerenteInputRef = useRef<HTMLInputElement>(null);
+  const diretorInputRef = useRef<HTMLInputElement>(null);
 
   const categories = ["instituicao", "aluno", "academico", "certificado", "assinaturas"];
-  const profileKeys: SPProfileKey[] = ["giovanne", "kassia", "jessica", "julia"];
-  const profileLabels: Record<SPProfileKey, string> = {
-    giovanne: "GIOVANNE",
-    kassia: "KASSIA",
-    jessica: "JESSICA",
-    julia: "JÚLIA",
-  };
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-3 border-b border-[#1a1a2a]">
-        <h3 className="text-sm font-semibold text-white mb-2">Perfis</h3>
-        <div className="flex gap-1.5 flex-wrap">
-          {profileKeys.map((key) => (
-            <Button
-              key={key}
-              size="sm"
-              variant={activeProfile === key ? "default" : "outline"}
-              className={`text-xs h-7 ${
-                activeProfile === key
-                  ? "bg-gradient-to-r from-[#2d8c4e] to-[#1a6b35] text-white"
-                  : "text-[#aaaacc] border-[#2a2a3a] hover:bg-[#1a1a2a]"
-              }`}
-              onClick={() => onApplyProfile(key)}
-            >
-              {profileLabels[key]}
-            </Button>
-          ))}
-        </div>
+        <h3 className="text-sm font-semibold text-white mb-1">Histórico Escolar SP</h3>
+        <p className="text-[10px] text-[#555566]">Edite os campos abaixo para gerar um novo documento</p>
         {modifiedCount > 0 && (
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-amber-400">{modifiedCount} campo(s) alterado(s)</span>
@@ -110,6 +93,72 @@ export default function SPSubstitutionPanel({
           )}
         </div>
         <p className="text-[9px] text-[#555566] mt-1">PNG sem fundo, mesmas proporções do original</p>
+      </div>
+
+      {/* Assinatura Gerente Upload */}
+      <div className="p-3 border-b border-[#1a1a2a]">
+        <h4 className="text-[10px] text-[#666688] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+          <PenTool size={11} /> Assinatura Gerente
+        </h4>
+        <div className="flex items-center gap-2">
+          <input
+            ref={gerenteInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file && onAssinaturaGerenteUpload) onAssinaturaGerenteUpload(file);
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs h-7 text-[#aaaacc] border-[#2a2a3a] hover:bg-[#1a1a2a] flex-1"
+            onClick={() => gerenteInputRef.current?.click()}
+          >
+            <Upload size={12} className="mr-1" />
+            {assinaturaGerenteUrl ? "Trocar Assinatura" : "Upload Assinatura"}
+          </Button>
+          {assinaturaGerenteUrl && (
+            <div className="w-10 h-8 rounded border border-[#2a2a3a] overflow-hidden flex items-center justify-center bg-white">
+              <img src={assinaturaGerenteUrl} alt="Assinatura Gerente" className="w-full h-full object-contain" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Assinatura Diretor Upload */}
+      <div className="p-3 border-b border-[#1a1a2a]">
+        <h4 className="text-[10px] text-[#666688] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+          <PenTool size={11} /> Assinatura Diretor
+        </h4>
+        <div className="flex items-center gap-2">
+          <input
+            ref={diretorInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file && onAssinaturaDiretorUpload) onAssinaturaDiretorUpload(file);
+            }}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs h-7 text-[#aaaacc] border-[#2a2a3a] hover:bg-[#1a1a2a] flex-1"
+            onClick={() => diretorInputRef.current?.click()}
+          >
+            <Upload size={12} className="mr-1" />
+            {assinaturaDiretorUrl ? "Trocar Assinatura" : "Upload Assinatura"}
+          </Button>
+          {assinaturaDiretorUrl && (
+            <div className="w-10 h-8 rounded border border-[#2a2a3a] overflow-hidden flex items-center justify-center bg-white">
+              <img src={assinaturaDiretorUrl} alt="Assinatura Diretor" className="w-full h-full object-contain" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Fields */}
