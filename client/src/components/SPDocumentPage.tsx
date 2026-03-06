@@ -235,7 +235,12 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
 
       {/* DADOS DO ALUNO */}
       <table style={{ width: "100%", borderCollapse: "collapse", borderLeft: bT, borderRight: bT, borderBottom: bT, tableLayout: "fixed" }}>
-        <colgroup><col style={{ width: "15%" }} /><col style={{ width: "44.4%" }} /><col style={{ width: "21.8%" }} /><col style={{ width: "18.8%" }} /></colgroup>
+        <colgroup>
+          <col style={{ width: "15%" }} />
+          <col style={{ width: "40%" }} />
+          <col style={{ width: "23%" }} />
+          <col style={{ width: "22%" }} />
+        </colgroup>
         <tbody>
           <tr>
             <td colSpan={2} style={cellS({ padding: "2px 4px", fontSize: "10pt" })}>
@@ -258,7 +263,7 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
             <td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}>
               Estado: <V val={uf} orig="SP" hl={hl} />
             </td>
-            <td style={cellS({ padding: "2px 4px", fontSize: "10pt", verticalAlign: "middle", textAlign: "center" })}>
+            <td style={cellS({ padding: "2px 4px", fontSize: "10pt", textAlign: "left" })}>
               País: <V val={f.pais} orig="BRASIL" hl={hl} />
             </td>
           </tr>
