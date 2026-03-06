@@ -3,13 +3,11 @@
  * Medidas extraídas via pdfplumber do PDF original (Giovanne)
  * Página A4: 210mm × 297mm | Fontes: Arial
  *
- * Correções v3 baseadas na captura de tela de alta resolução do PDF:
- * - Cabeçalho: GOVERNO 14pt, SECRETARIA 10pt bold, ESCOLA 10pt bold
- * - Linhas 1-3 sem bordas entre si; bordas a partir de Ato Legal
- * - Nascimento: layout com sub-tabela (Nascimento rowspan | Município/Data)
- * - Nº 611 alinhado à direita com separador vertical
- * - Endereço eletrônico em 8pt, restante 9pt
- * - Espaçamento entre grupos de disciplinas
+ * v4 — Correções baseadas em capturas de alta resolução:
+ * - Linhas em branco entre grupos de disciplinas (Linguagens→Ciências Nat, Ciências Nat→Humanas)
+ * - Estudos Realizados: sub-tabela com colunas próprias (Série 7.9%, Ano 6.1%, Estab 44.4%, Munic 15.1%, UF 8.3%)
+ * - Dados do aluno: células vazias na linha de Data (Estado/País)
+ * - Assinaturas: maiores, sobrepostas ao texto Nome:, posição conforme PDF
  */
 import { SP_GRADES_DEFAULT, type SPGradeRow } from "@/lib/historicoSPData";
 import { BRASAO_SP_B64, SIG_GERENTE_B64, SIG_DIRETOR_B64 } from "@/lib/spAssets";
@@ -55,12 +53,16 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
     fontFamily: ff,
   });
 
-  /* Grade row areas mapping */
+  /* Grade row areas mapping — includes blank separator rows */
+  /* Grades array: 0=LingPort, 1=Arte, 2=EdFisica, 3=Mat, 4=Bio, 5=Fis, 6=Quim, 7=Hist, 8=Geo, 9=Filo, 10=Socio */
   const areas = [
     { label: "Linguagens\nCódigos e\nsuas\nTecnologias", rows: [0, 1, 2] },
     { label: "Ciências da\nNatureza,\nMatemática e\nsuas\nTecnologias", rows: [3, 4, 5, 6] },
     { label: "Ciências\nHumanas e\nsuas\nTecnologias", rows: [7, 8, 9, 10] },
   ];
+
+  /* Indices where a blank separator row should appear BEFORE the discipline */
+  const blankRowBefore = new Set([3, 7]); /* Before Matemática (idx 3), Before História (idx 7) */
 
   /* Cell style helpers */
   const cellS = (extra: React.CSSProperties = {}): React.CSSProperties => ({
@@ -73,6 +75,54 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
   /* Dynamic font size for school name */
   const escolaLen = (f.nome_escola || "").length;
   const escolaFontSize = escolaLen > 60 ? "8.5pt" : escolaLen > 50 ? "9pt" : "10pt";
+
+  /* Build grade rows with blank separators */
+  const gradeRows: React.ReactNode[] = [];
+  grades.forEach((g, i) => {
+    /* Insert blank row before groups 2 and 3 */
+    if (blankRowBefore.has(i)) {
+      gradeRows.push(
+        <tr key={`blank-${i}`}>
+          {/* No area cell — the area rowSpan from previous group ended, new area starts next */}
+          <td colSpan={2} style={cellS({ padding: "0", height: "2px", borderLeft: b, borderRight: b })}></td>
+          <td style={cellS({ padding: "0", height: "2px" })}></td>
+          <td style={cellS({ padding: "0", height: "2px" })}></td>
+          <td style={cellS({ padding: "0", height: "2px" })}></td>
+          <td style={cellS({ padding: "0", height: "2px" })}></td>
+          <td style={cellS({ padding: "0", height: "2px" })}></td>
+        </tr>
+      );
+    }
+
+    const area = areas.find((a) => a.rows.includes(i));
+    const isFirstInArea = area && area.rows[0] === i;
+
+    gradeRows.push(
+      <tr key={i}>
+        {isFirstInArea && (
+          <td
+            rowSpan={area!.rows.length}
+            style={centerS({
+              padding: "1px 1px", fontSize: "6pt",
+              verticalAlign: "middle", lineHeight: 1.15,
+            })}
+          >
+            {area!.label.split("\n").map((line, li) => (
+              <span key={li}>{line}{li < area!.label.split("\n").length - 1 && <br />}</span>
+            ))}
+          </td>
+        )}
+        <td style={cellS({ padding: "0.5px 3px", fontSize: "10pt" })}>
+          {g.disciplina}
+        </td>
+        <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}></td>
+        <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}>{g.nota1}</td>
+        <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}>{g.nota2}</td>
+        <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}>{g.nota3}</td>
+        <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}>{g.ch}</td>
+      </tr>
+    );
+  });
 
   return (
     <div
@@ -91,17 +141,10 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
         color: "#000",
         boxSizing: "border-box",
         position: "relative",
-        padding: "9.9mm 12.7mm 25mm 14.5mm",
+        padding: "9.9mm 12.7mm 12mm 14.5mm",
       }}
     >
       {/* ═══════════════════ CABEÇALHO INSTITUCIONAL ═══════════════════ */}
-      {/*
-        Layout do cabeçalho conforme PDF original:
-        - Brasão à esquerda (~20.8%) com borda direita
-        - Direita: 3 linhas de título SEM bordas entre si
-        - Depois: 4 linhas de dados COM bordas entre si
-        - Linhas de dados: Ato Legal | Endereço+Nº | Bairro+Munic+CEP | Tel+Email
-      */}
       <table style={{ width: "100%", borderCollapse: "collapse", border: bT, tableLayout: "fixed" }}>
         <colgroup>
           <col style={{ width: "20.8%" }} />
@@ -109,128 +152,78 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
         </colgroup>
         <tbody>
           <tr>
-            {/* Brasão - spans all 7 rows */}
             <td rowSpan={7} style={{
-              borderRight: b,
-              padding: "4px",
-              verticalAlign: "middle",
-              textAlign: "center",
+              borderRight: b, padding: "4px", verticalAlign: "middle", textAlign: "center",
             }}>
               <img src={logoSrc} alt="" style={{ width: "68px", height: "auto", display: "block", margin: "0 auto" }} crossOrigin="anonymous" />
             </td>
-            {/* GOVERNO DO ESTADO DE SÃO PAULO - grande, bold */}
-            <td style={{
-              padding: "3px 6px 0 6px",
-              fontSize: "14pt",
-              fontWeight: "bold",
-              fontFamily: ff,
-              lineHeight: 1.15,
-            }}>
+            <td style={{ padding: "3px 6px 0 6px", fontSize: "14pt", fontWeight: "bold", fontFamily: ff, lineHeight: 1.15 }}>
               GOVERNO DO ESTADO DE SÃO PAULO
             </td>
           </tr>
-          {/* SECRETARIA DE ESTADO DA EDUCAÇÃO */}
           <tr>
-            <td style={{
-              padding: "0 6px",
-              fontSize: "10pt",
-              fontWeight: "bold",
-              fontFamily: ff,
-              lineHeight: 1.3,
-            }}>
+            <td style={{ padding: "0 6px", fontSize: "10pt", fontWeight: "bold", fontFamily: ff, lineHeight: 1.3 }}>
               SECRETARIA DE ESTADO DA EDUCAÇÃO
             </td>
           </tr>
-          {/* ESCOLA ESTADUAL ... */}
           <tr>
             <td style={{
-              padding: "0 6px 1px 6px",
-              fontSize: escolaFontSize,
-              fontWeight: "bold",
-              fontFamily: ff,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              lineHeight: 1.3,
+              padding: "0 6px 1px 6px", fontSize: escolaFontSize, fontWeight: "bold", fontFamily: ff,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.3,
             }}>
               <V val={f.nome_escola} orig="ESCOLA ESTADUAL E. E. Mª APDA. FRANÇA B. ARAUJO PROFª" hl={hl} />
             </td>
           </tr>
-          {/* Ato Legal de Criação - COM border-top */}
           <tr>
-            <td style={{
-              padding: "1px 6px",
-              fontSize: "9pt",
-              fontFamily: ff,
-              borderTop: b,
-            }}>
+            <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff, borderTop: b }}>
               Ato Legal de Criação: <V val={f.ato_legal} orig="906748" hl={hl} />
             </td>
           </tr>
-          {/* Endereço | Nº - COM border-top, sub-tabela para colunas */}
           <tr>
             <td style={{ padding: 0, borderTop: b }}>
               <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
-                <colgroup>
-                  <col style={{ width: "75%" }} />
-                  <col style={{ width: "25%" }} />
-                </colgroup>
-                <tbody>
-                  <tr>
-                    <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff }}>
-                      Endereço: <V val={f.endereco_escola} orig="Av. Honorio Ferreira Pedrosa" hl={hl} />
-                    </td>
-                    <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff, borderLeft: b, textAlign: "right" }}>
-                      Nº <V val={f.numero_escola} orig="611" hl={hl} />
-                    </td>
-                  </tr>
-                </tbody>
+                <colgroup><col style={{ width: "75%" }} /><col style={{ width: "25%" }} /></colgroup>
+                <tbody><tr>
+                  <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff }}>
+                    Endereço: <V val={f.endereco_escola} orig="Av. Honorio Ferreira Pedrosa" hl={hl} />
+                  </td>
+                  <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff, borderLeft: b, textAlign: "right" }}>
+                    Nº <V val={f.numero_escola} orig="611" hl={hl} />
+                  </td>
+                </tr></tbody>
               </table>
             </td>
           </tr>
-          {/* Bairro | Município | CEP - COM border-top, sub-tabela */}
           <tr>
             <td style={{ padding: 0, borderTop: b }}>
               <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
-                <colgroup>
-                  <col style={{ width: "33%" }} />
-                  <col style={{ width: "40%" }} />
-                  <col style={{ width: "27%" }} />
-                </colgroup>
-                <tbody>
-                  <tr>
-                    <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff }}>
-                      Bairro: <V val={f.bairro} orig="Pq Nova Cacapava" hl={hl} />
-                    </td>
-                    <td style={{ padding: "1px 4px", fontSize: "9pt", fontFamily: ff, borderLeft: b }}>
-                      Município: <V val={f.municipio_escola} orig="Cacapava" hl={hl} />
-                    </td>
-                    <td style={{ padding: "1px 4px", fontSize: "9pt", fontFamily: ff, borderLeft: b }}>
-                      CEP:<V val={f.cep_escola} orig="06411-160" hl={hl} />
-                    </td>
-                  </tr>
-                </tbody>
+                <colgroup><col style={{ width: "33%" }} /><col style={{ width: "40%" }} /><col style={{ width: "27%" }} /></colgroup>
+                <tbody><tr>
+                  <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff }}>
+                    Bairro: <V val={f.bairro} orig="Pq Nova Cacapava" hl={hl} />
+                  </td>
+                  <td style={{ padding: "1px 4px", fontSize: "9pt", fontFamily: ff, borderLeft: b }}>
+                    Município: <V val={f.municipio_escola} orig="Cacapava" hl={hl} />
+                  </td>
+                  <td style={{ padding: "1px 4px", fontSize: "9pt", fontFamily: ff, borderLeft: b }}>
+                    CEP:<V val={f.cep_escola} orig="06411-160" hl={hl} />
+                  </td>
+                </tr></tbody>
               </table>
             </td>
           </tr>
-          {/* Tel | Endereço eletrônico - COM border-top, sub-tabela */}
           <tr>
             <td style={{ padding: 0, borderTop: b }}>
               <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
-                <colgroup>
-                  <col style={{ width: "33%" }} />
-                  <col style={{ width: "67%" }} />
-                </colgroup>
-                <tbody>
-                  <tr>
-                    <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff }}>
-                      Tel. <V val={f.telefone_escola} orig="(12) 36521267" hl={hl} />
-                    </td>
-                    <td style={{ padding: "1px 4px", fontSize: "9pt", fontFamily: ff, borderLeft: b }}>
-                      <span style={{ fontSize: "8pt" }}>Endereço eletrônico</span>:&nbsp;&nbsp;<V val={f.email_escola} orig="E906748A@EDUCACAO.SP.GOV.BR" hl={hl} />
-                    </td>
-                  </tr>
-                </tbody>
+                <colgroup><col style={{ width: "33%" }} /><col style={{ width: "67%" }} /></colgroup>
+                <tbody><tr>
+                  <td style={{ padding: "1px 6px", fontSize: "9pt", fontFamily: ff }}>
+                    Tel. <V val={f.telefone_escola} orig="(12) 36521267" hl={hl} />
+                  </td>
+                  <td style={{ padding: "1px 4px", fontSize: "9pt", fontFamily: ff, borderLeft: b }}>
+                    <span style={{ fontSize: "8pt" }}>Endereço eletrônico</span>:&nbsp;&nbsp;<V val={f.email_escola} orig="E906748A@EDUCACAO.SP.GOV.BR" hl={hl} />
+                  </td>
+                </tr></tbody>
               </table>
             </td>
           </tr>
@@ -239,27 +232,14 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
 
       {/* ═══════════════════ TÍTULO ═══════════════════ */}
       <div style={{
-        textAlign: "center",
-        fontWeight: "bold",
-        fontSize: "12pt",
-        fontFamily: ff,
-        padding: "4px 0",
-        background: "#c8c8c8",
-        borderLeft: bT,
-        borderRight: bT,
-        borderBottom: bT,
-        letterSpacing: "0.5px",
+        textAlign: "center", fontWeight: "bold", fontSize: "12pt", fontFamily: ff,
+        padding: "4px 0", background: "#c8c8c8",
+        borderLeft: bT, borderRight: bT, borderBottom: bT, letterSpacing: "0.5px",
       }}>
         HISTÓRICO ESCOLAR – ENSINO MÉDIO
       </div>
 
       {/* ═══════════════════ DADOS DO ALUNO ═══════════════════ */}
-      {/*
-        Layout conforme captura de tela:
-        Linha 1: "Nome do Aluno: GIOVANE..." | "R.G.: 555285753" | "RA: 26205579-0"
-        Linha 2: "Nascimento" (bold, rowspan=2, centralizado) | "Município: Cacapava" | "Estado: SP" | "País: BRASIL"
-        Linha 3: (nascimento continua)                        | "Data: 01/12/1999"    |              |
-      */}
       <table style={{ width: "100%", borderCollapse: "collapse", borderLeft: bT, borderRight: bT, borderBottom: b, tableLayout: "fixed" }}>
         <colgroup>
           <col style={{ width: "15%" }} />
@@ -268,7 +248,6 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
           <col style={{ width: "18.8%" }} />
         </colgroup>
         <tbody>
-          {/* Linha 1: Nome do Aluno | RG | RA */}
           <tr>
             <td colSpan={2} style={cellS({ padding: "2px 4px", fontSize: "10pt" })}>
               <b>Nome do Aluno</b>: <V val={f.nome_aluno} orig="GIOVANE SILVA DOS SANTOS" hl={hl} />
@@ -280,14 +259,10 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
               RA: <V val={f.ra} orig="26205579-0" hl={hl} />
             </td>
           </tr>
-          {/* Linha 2: Nascimento (rowspan) | Município | Estado | País */}
           <tr>
             <td rowSpan={2} style={cellS({
-              padding: "2px 4px",
-              fontSize: "10pt",
-              fontWeight: "bold",
-              verticalAlign: "middle",
-              textAlign: "center",
+              padding: "2px 4px", fontSize: "10pt", fontWeight: "bold",
+              verticalAlign: "middle", textAlign: "center",
             })}>
               Nascimento
             </td>
@@ -297,31 +272,25 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
             <td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}>
               Estado: <V val={f.estado_nascimento} orig="SP" hl={hl} />
             </td>
-            <td rowSpan={2} style={cellS({ padding: "2px 4px", fontSize: "10pt", verticalAlign: "middle", textAlign: "center" })}>
+            <td style={cellS({ padding: "2px 4px", fontSize: "10pt", verticalAlign: "middle", textAlign: "center" })}>
               País: <V val={f.pais} orig="BRASIL" hl={hl} />
             </td>
           </tr>
-          {/* Linha 3: (Nascimento continua) | Data */}
           <tr>
             <td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}>
               Data: <V val={f.data_nascimento} orig="01/12/1999" hl={hl} />
             </td>
             <td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}></td>
+            <td style={cellS({ padding: "2px 4px", fontSize: "10pt" })}></td>
           </tr>
         </tbody>
       </table>
 
-      {/* Spacer entre dados e tabela de notas */}
-      <div style={{ height: "4mm" }} />
+      {/* Spacer */}
+      <div style={{ height: "2mm" }} />
 
       {/* ═══════════════════ TABELA DE NOTAS ═══════════════════ */}
-      {/* PDF exact: 4.3% | 5.0% | 10.9% | 43.0% | 7.2% | 7.2% | 7.2% | 7.3% | 7.8% */}
-      <table style={{
-        width: "100%",
-        borderCollapse: "collapse",
-        border: bT,
-        tableLayout: "fixed",
-      }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", border: bT, tableLayout: "fixed" }}>
         <colgroup>
           <col style={{ width: "4.3%" }} />
           <col style={{ width: "5.0%" }} />
@@ -336,120 +305,55 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
         <tbody>
           {/* ── Header row ── */}
           <tr>
-            {/* Col 0: Fundamento Legal - spans ALL rows */}
-            <td
-              rowSpan={100}
-              style={{
-                borderRight: b,
-                verticalAlign: "middle", textAlign: "center",
-                padding: 0, position: "relative",
-              }}
-            >
+            <td rowSpan={100} style={{
+              borderRight: b, verticalAlign: "middle", textAlign: "center",
+              padding: 0, position: "relative",
+            }}>
               <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
                 <div style={vt("6pt", false)}>Fundamento Legal: Lei Federal 9394/96</div>
               </div>
             </td>
 
-            {/* Col 1: BASE NACIONAL COMUM - spans 14 rows */}
-            <td
-              rowSpan={14}
-              style={{
-                borderRight: b, borderBottom: b,
-                verticalAlign: "middle", textAlign: "center",
-                padding: 0, position: "relative",
-              }}
-            >
+            <td rowSpan={16} style={{
+              borderRight: b, borderBottom: b,
+              verticalAlign: "middle", textAlign: "center",
+              padding: 0, position: "relative",
+            }}>
               <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
                 <div style={vt("6pt", true)}>BASE NACIONAL COMUM</div>
               </div>
             </td>
 
-            {/* Col 2: ÁREAS DE CONHECIMENTO */}
-            <td style={centerS({
-              padding: "2px 1px", fontSize: "6pt", fontWeight: "bold",
-              lineHeight: 1.2,
-            })}>
+            <td style={centerS({ padding: "2px 1px", fontSize: "6pt", fontWeight: "bold", lineHeight: 1.2 })}>
               ÁREAS DE<br />CONHECIMENTO
             </td>
-
-            {/* Col 3: COMPONENTES CURRICULARES */}
-            <td style={centerS({
-              padding: "2px 2px", fontSize: "10pt", fontWeight: "bold",
-            })}>
+            <td style={centerS({ padding: "2px 2px", fontSize: "10pt", fontWeight: "bold" })}>
               COMPONENTES CURRICULARES
             </td>
-
-            {/* Col 4: Ano/Série */}
-            <td style={centerS({
-              padding: "2px 0", fontSize: "10pt", lineHeight: 1.2,
-            })}>
+            <td style={centerS({ padding: "2px 0", fontSize: "10pt", lineHeight: 1.2 })}>
               Ano<br />Série
             </td>
-
-            {/* Col 5: 2017/1ª */}
-            <td style={centerS({
-              padding: "1px 0", fontSize: "8pt", lineHeight: 1.3,
-            })}>
+            <td style={centerS({ padding: "1px 0", fontSize: "8pt", lineHeight: 1.3 })}>
               <V val={f.ano_1a_serie} orig="2017" hl={hl} /><br />
               <span style={{ fontWeight: "bold", fontSize: "9pt" }}>1ª</span>
             </td>
-
-            {/* Col 6: 2018/2ª */}
-            <td style={centerS({
-              padding: "1px 0", fontSize: "8pt", lineHeight: 1.3,
-            })}>
+            <td style={centerS({ padding: "1px 0", fontSize: "8pt", lineHeight: 1.3 })}>
               <V val={f.ano_2a_serie} orig="2018" hl={hl} /><br />
               <span style={{ fontWeight: "bold", fontSize: "9pt" }}>2ª</span>
             </td>
-
-            {/* Col 7: 2019/3ª */}
-            <td style={centerS({
-              padding: "1px 0", fontSize: "8pt", lineHeight: 1.3,
-            })}>
+            <td style={centerS({ padding: "1px 0", fontSize: "8pt", lineHeight: 1.3 })}>
               <V val={f.ano_3a_serie} orig="2019" hl={hl} /><br />
               <span style={{ fontWeight: "bold", fontSize: "9pt" }}>3ª</span>
             </td>
-
-            {/* Col 8: CARGA HORÁRIA */}
-            <td style={centerS({
-              padding: "1px 0", fontSize: "6pt", fontWeight: "bold", lineHeight: 1.2,
-            })}>
+            <td style={centerS({ padding: "1px 0", fontSize: "6pt", fontWeight: "bold", lineHeight: 1.2 })}>
               CARGA<br />HORÁRIA
             </td>
           </tr>
 
-          {/* ── Grade rows (11 disciplines) ── */}
-          {grades.map((g, i) => {
-            const area = areas.find((a) => a.rows.includes(i));
-            const isFirstInArea = area && area.rows[0] === i;
-            return (
-              <tr key={i}>
-                {isFirstInArea && (
-                  <td
-                    rowSpan={area!.rows.length}
-                    style={centerS({
-                      padding: "1px 1px", fontSize: "6pt",
-                      verticalAlign: "middle", lineHeight: 1.15,
-                    })}
-                  >
-                    {area!.label.split("\n").map((line, li) => (
-                      <span key={li}>{line}{li < area!.label.split("\n").length - 1 && <br />}</span>
-                    ))}
-                  </td>
-                )}
-                <td style={cellS({ padding: "0.5px 3px", fontSize: "10pt" })}>
-                  {g.disciplina}
-                </td>
-                <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}></td>
-                <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}>{g.nota1}</td>
-                <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}>{g.nota2}</td>
-                <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}>{g.nota3}</td>
-                <td style={centerS({ fontSize: "10pt", padding: "0.5px 0" })}>{g.ch}</td>
-              </tr>
-            );
-          })}
+          {/* ── Grade rows with blank separators ── */}
+          {gradeRows}
 
-          {/* ── Total de aulas anuais da Base Nacional Comum ── */}
+          {/* ── Total de aulas anuais ── */}
           <tr>
             <td colSpan={2} style={cellS({ padding: "0.5px 3px", fontSize: "8pt" })}>
               Total de aulas anuais da Base Nacional Comum
@@ -463,9 +367,7 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
 
           {/* ── TOTAL DA CARGA HORÁRIA DA BASE NACIONAL COMUM ── */}
           <tr>
-            <td colSpan={2} style={cellS({
-              padding: "0.5px 3px", fontSize: "8pt", fontWeight: "bold",
-            })}>
+            <td colSpan={2} style={cellS({ padding: "0.5px 3px", fontSize: "8pt", fontWeight: "bold" })}>
               TOTAL DA CARGA HORÁRIA DA BASE NACIONAL COMUM
             </td>
             <td style={cellS({ padding: "0.5px 0" })}></td>
@@ -477,14 +379,11 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
 
           {/* ═══ PARTE DIVERSIFICADA ═══ */}
           <tr>
-            <td
-              rowSpan={5}
-              style={{
-                borderRight: b, borderBottom: b,
-                verticalAlign: "middle", textAlign: "center",
-                padding: 0, position: "relative",
-              }}
-            >
+            <td rowSpan={5} style={{
+              borderRight: b, borderBottom: b,
+              verticalAlign: "middle", textAlign: "center",
+              padding: 0, position: "relative",
+            }}>
               <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
                 <div style={vt("5.5pt", true)}>
                   <span>PARTE</span><br /><span>DIVERSIFICADA</span>
@@ -530,8 +429,6 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
             <td style={cellS({ padding: "0.5px 0" })}></td>
             <td style={cellS({ padding: "0.5px 0" })}></td>
           </tr>
-
-          {/* ── Totais Parte Diversificada ── */}
           <tr>
             <td colSpan={7} style={cellS({ padding: "1px 3px", fontSize: "8pt", fontWeight: "bold", lineHeight: 1.4 })}>
               <div>TOTAL DE AULAS ANUAIS DA PARTE DIVERSIFICADA</div>
@@ -542,123 +439,181 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
           {/* ── TOTAL DE CARGA HORÁRIA ANUAL DO CURSO ── */}
           <tr>
             <td colSpan={7} style={cellS({
-              padding: "2px 3px", fontSize: "8pt", fontWeight: "bold",
-              borderBottom: bT,
+              padding: "2px 3px", fontSize: "8pt", fontWeight: "bold", borderBottom: bT,
             })}>
               TOTAL DE CARGA HORÁRIA ANUAL DO CURSO
             </td>
           </tr>
 
           {/* ═══ ESTUDOS REALIZADOS ═══ */}
-          {/* Header row */}
+          {/* Uses sub-table inside colspan=7 to get correct column proportions */}
+          {/* PDF measurements: Ensino 13%, Série 7.9%, Ano 6.1%, Estab 44.4%, Munic 15.1%, UF 8.3% */}
           <tr>
-            <td
-              rowSpan={6}
-              style={{
-                borderRight: b, borderBottom: bT,
-                verticalAlign: "middle", textAlign: "center",
-                padding: 0, position: "relative",
-              }}
-            >
+            <td rowSpan={6} style={{
+              borderRight: b, borderBottom: bT,
+              verticalAlign: "middle", textAlign: "center",
+              padding: 0, position: "relative",
+            }}>
               <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
                 <div style={vt("5.5pt", true)}>
                   <span>ESTUDOS</span><br /><span>REALIZADOS</span>
                 </div>
               </div>
             </td>
-            <td style={cellS({ padding: "1px 1px", fontSize: "7pt" })}></td>
-            <td style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px" })}>Série</td>
-            <td style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px" })}>Ano</td>
-            <td colSpan={3} style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px" })}>
-              Estabelecimento de Ensino
+            {/* Sub-table header row */}
+            <td colSpan={7} style={{ border: b, padding: 0 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                <colgroup>
+                  <col style={{ width: "13.8%" }} />
+                  <col style={{ width: "8.4%" }} />
+                  <col style={{ width: "6.4%" }} />
+                  <col style={{ width: "46.8%" }} />
+                  <col style={{ width: "15.9%" }} />
+                  <col style={{ width: "8.7%" }} />
+                </colgroup>
+                <tbody><tr>
+                  <td style={cellS({ padding: "1px 2px", fontSize: "7pt", borderLeft: "none", borderTop: "none", borderBottom: "none" })}></td>
+                  <td style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px", borderTop: "none", borderBottom: "none" })}>Série</td>
+                  <td style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px", borderTop: "none", borderBottom: "none" })}>Ano</td>
+                  <td style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px", borderTop: "none", borderBottom: "none" })}>Estabelecimento de Ensino</td>
+                  <td style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px", borderTop: "none", borderBottom: "none" })}>Município</td>
+                  <td style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px", borderTop: "none", borderRight: "none", borderBottom: "none" })}>UF</td>
+                </tr></tbody>
+              </table>
             </td>
-            <td style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px" })}>Município</td>
-            <td style={centerS({ fontWeight: "bold", fontSize: "8pt", padding: "1px 1px" })}>UF</td>
           </tr>
 
           {/* Ensino Fundamental */}
           <tr>
-            <td style={cellS({ fontSize: "7pt", verticalAlign: "middle", lineHeight: 1.15, padding: "1px 2px" })}>
-              Ensino<br />Fundamental
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.ano_fund_serie} orig="8ª Série" hl={hl} />
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.ano_fund} orig="2016" hl={hl} />
-            </td>
-            <td colSpan={3} style={cellS({
-              padding: "1px 3px", fontSize: "8pt",
-              textAlign: "center",
-            })}>
-              <V val={f.escola_fund} orig="E. E. Mª Apda. França B. Araujo Profª" hl={hl} />
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.municipio_fund} orig="Cacapava" hl={hl} />
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.uf_fund || "SP"} orig="SP" hl={hl} />
+            <td colSpan={7} style={{ border: b, padding: 0 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                <colgroup>
+                  <col style={{ width: "13.8%" }} />
+                  <col style={{ width: "8.4%" }} />
+                  <col style={{ width: "6.4%" }} />
+                  <col style={{ width: "46.8%" }} />
+                  <col style={{ width: "15.9%" }} />
+                  <col style={{ width: "8.7%" }} />
+                </colgroup>
+                <tbody><tr>
+                  <td style={cellS({ fontSize: "7pt", verticalAlign: "middle", lineHeight: 1.15, padding: "1px 2px", borderLeft: "none", borderTop: "none", borderBottom: "none" })}>
+                    Ensino<br />Fundamental
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.ano_fund_serie} orig="8ª Série" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.ano_fund} orig="2016" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 3px", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.escola_fund} orig="E. E. Mª Apda. França B. Araujo Profª" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.municipio_fund} orig="Cacapava" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderRight: "none", borderBottom: "none" })}>
+                    <V val={f.uf_fund || "SP"} orig="SP" hl={hl} />
+                  </td>
+                </tr></tbody>
+              </table>
             </td>
           </tr>
 
           {/* Ensino Médio — 1ª Série */}
           <tr>
-            <td rowSpan={3} style={cellS({ fontSize: "7pt", verticalAlign: "middle", lineHeight: 1.15, padding: "1px 2px" })}>
-              Ensino<br />Médio
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>1ª Série</td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.ano_1a_serie} orig="2017" hl={hl} />
-            </td>
-            <td colSpan={3} style={cellS({
-              padding: "1px 3px", fontSize: "8pt",
-              textAlign: "center",
-            })}>
-              <V val={f.escola_1a} orig="E. E. Mª Apda. França B. Araujo Profª" hl={hl} />
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.municipio_1a} orig="Cacapava" hl={hl} />
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.uf_1a || "SP"} orig="SP" hl={hl} />
+            <td colSpan={7} style={{ border: b, padding: 0 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                <colgroup>
+                  <col style={{ width: "13.8%" }} />
+                  <col style={{ width: "8.4%" }} />
+                  <col style={{ width: "6.4%" }} />
+                  <col style={{ width: "46.8%" }} />
+                  <col style={{ width: "15.9%" }} />
+                  <col style={{ width: "8.7%" }} />
+                </colgroup>
+                <tbody><tr>
+                  <td rowSpan={1} style={cellS({ fontSize: "7pt", verticalAlign: "middle", lineHeight: 1.15, padding: "1px 2px", borderLeft: "none", borderTop: "none", borderBottom: "none" })}>
+                    Ensino<br />Médio
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>1ª Série</td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.ano_1a_serie} orig="2017" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 3px", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.escola_1a} orig="E. E. Mª Apda. França B. Araujo Profª" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.municipio_1a} orig="Cacapava" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderRight: "none", borderBottom: "none" })}>
+                    <V val={f.uf_1a || "SP"} orig="SP" hl={hl} />
+                  </td>
+                </tr></tbody>
+              </table>
             </td>
           </tr>
+
           {/* 2ª Série */}
           <tr>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>2ª Série</td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.ano_2a_serie} orig="2018" hl={hl} />
-            </td>
-            <td colSpan={3} style={cellS({
-              padding: "1px 3px", fontSize: "8pt",
-              textAlign: "center",
-            })}>
-              <V val={f.escola_2a} orig="E. E. Mª Apda. França B. Araujo Profª" hl={hl} />
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.municipio_2a} orig="Cacapava" hl={hl} />
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.uf_2a || "SP"} orig="SP" hl={hl} />
+            <td colSpan={7} style={{ border: b, padding: 0 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                <colgroup>
+                  <col style={{ width: "13.8%" }} />
+                  <col style={{ width: "8.4%" }} />
+                  <col style={{ width: "6.4%" }} />
+                  <col style={{ width: "46.8%" }} />
+                  <col style={{ width: "15.9%" }} />
+                  <col style={{ width: "8.7%" }} />
+                </colgroup>
+                <tbody><tr>
+                  <td style={cellS({ fontSize: "7pt", padding: "1px 2px", borderLeft: "none", borderTop: "none", borderBottom: "none" })}></td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>2ª Série</td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.ano_2a_serie} orig="2018" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 3px", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.escola_2a} orig="E. E. Mª Apda. França B. Araujo Profª" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.municipio_2a} orig="Cacapava" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderRight: "none", borderBottom: "none" })}>
+                    <V val={f.uf_2a || "SP"} orig="SP" hl={hl} />
+                  </td>
+                </tr></tbody>
+              </table>
             </td>
           </tr>
+
           {/* 3ª Série */}
           <tr>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>3ª Série</td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.ano_3a_serie} orig="2019" hl={hl} />
-            </td>
-            <td colSpan={3} style={cellS({
-              padding: "1px 3px", fontSize: "8pt",
-              textAlign: "center",
-            })}>
-              <V val={f.escola_3a} orig="E. E. Mª Apda. França B. Araujo Profª" hl={hl} />
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.municipio_3a} orig="Cacapava" hl={hl} />
-            </td>
-            <td style={centerS({ fontSize: "8pt", padding: "1px 0" })}>
-              <V val={f.uf_3a || "SP"} orig="SP" hl={hl} />
+            <td colSpan={7} style={{ border: b, borderBottom: bT, padding: 0 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                <colgroup>
+                  <col style={{ width: "13.8%" }} />
+                  <col style={{ width: "8.4%" }} />
+                  <col style={{ width: "6.4%" }} />
+                  <col style={{ width: "46.8%" }} />
+                  <col style={{ width: "15.9%" }} />
+                  <col style={{ width: "8.7%" }} />
+                </colgroup>
+                <tbody><tr>
+                  <td style={cellS({ fontSize: "7pt", padding: "1px 2px", borderLeft: "none", borderTop: "none", borderBottom: "none" })}></td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>3ª Série</td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.ano_3a_serie} orig="2019" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 3px", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.escola_3a} orig="E. E. Mª Apda. França B. Araujo Profª" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderBottom: "none" })}>
+                    <V val={f.municipio_3a} orig="Cacapava" hl={hl} />
+                  </td>
+                  <td style={centerS({ fontSize: "8pt", padding: "1px 0", borderTop: "none", borderRight: "none", borderBottom: "none" })}>
+                    <V val={f.uf_3a || "SP"} orig="SP" hl={hl} />
+                  </td>
+                </tr></tbody>
+              </table>
             </td>
           </tr>
         </tbody>
@@ -710,6 +665,7 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
       </div>
 
       {/* ═══════════════════ ASSINATURAS ═══════════════════ */}
+      {/* Conforme captura: assinaturas grandes, sobrepostas ao texto Nome: */}
       <table style={{
         width: "100%", borderCollapse: "collapse", tableLayout: "fixed",
         borderLeft: bT, borderRight: bT, borderBottom: bT,
@@ -726,9 +682,13 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
               borderRight: b, borderTop: b,
               padding: "2px 4px 3px 4px", textAlign: "center",
               fontSize: "7pt", fontFamily: ff, verticalAlign: "bottom",
-              position: "relative", height: "72px",
+              position: "relative", height: "68px",
             }}>
-              <div style={{ position: "absolute", top: "2px", left: "50%", transform: "translateX(-50%)", width: "120px", height: "38px" }}>
+              {/* Assinatura sobreposta - posicionada sobre o texto Nome: */}
+              <div style={{
+                position: "absolute", top: "-2px", left: "10%", width: "80%", height: "50px",
+                zIndex: 1,
+              }}>
                 <img
                   src={sigGerente}
                   alt=""
@@ -736,7 +696,7 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
                   crossOrigin="anonymous"
                 />
               </div>
-              <div style={{ position: "absolute", bottom: "3px", left: 0, right: 0, textAlign: "center", lineHeight: 1.25 }}>
+              <div style={{ position: "absolute", bottom: "3px", left: 0, right: 0, textAlign: "center", lineHeight: 1.25, zIndex: 2 }}>
                 <div>Nome: <V val={f.gerente_nome} orig="MARISTELA GALVANI MACHADO" hl={hl} /></div>
                 <div>R.G.: <V val={f.gerente_rg} orig="23.425.125-45" hl={hl} /></div>
                 <div style={{ fontWeight: "bold", marginTop: "1px" }}>Gerente de Organização Escolar</div>
@@ -748,10 +708,10 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
               borderRight: b, borderTop: b,
               padding: "2px 4px 3px 4px", textAlign: "center",
               fontSize: "7pt", fontFamily: ff, verticalAlign: "bottom",
-              position: "relative", height: "72px",
+              position: "relative", height: "68px",
             }}>
               <div style={{ position: "absolute", bottom: "3px", left: 0, right: 0, textAlign: "center", lineHeight: 1.25 }}>
-                <div style={{ marginBottom: "6px" }}>
+                <div style={{ marginBottom: "6px", textDecoration: "underline" }}>
                   <V val={f.local_data} orig="Cacapava - SP, 04/12/2019" hl={hl} />
                 </div>
                 <div style={{ fontWeight: "bold" }}>LOCAL/DATA</div>
@@ -763,9 +723,13 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
               borderTop: b,
               padding: "2px 4px 3px 4px", textAlign: "center",
               fontSize: "7pt", fontFamily: ff, verticalAlign: "bottom",
-              position: "relative", height: "72px",
+              position: "relative", height: "68px",
             }}>
-              <div style={{ position: "absolute", top: "2px", left: "50%", transform: "translateX(-50%)", width: "120px", height: "38px" }}>
+              {/* Assinatura sobreposta */}
+              <div style={{
+                position: "absolute", top: "-2px", left: "10%", width: "80%", height: "50px",
+                zIndex: 1,
+              }}>
                 <img
                   src={sigDiretor}
                   alt=""
@@ -773,7 +737,7 @@ export function SPPage1({ f, highlightModified, grades = SP_GRADES_DEFAULT, bras
                   crossOrigin="anonymous"
                 />
               </div>
-              <div style={{ position: "absolute", bottom: "3px", left: 0, right: 0, textAlign: "center", lineHeight: 1.25 }}>
+              <div style={{ position: "absolute", bottom: "3px", left: 0, right: 0, textAlign: "center", lineHeight: 1.25, zIndex: 2 }}>
                 <div>Nome: <V val={f.diretor_nome} orig="ANGELA PEREIRA DOS SANTOS" hl={hl} /></div>
                 <div>R.G.: <V val={f.diretor_rg} orig="13.068.721-63" hl={hl} /></div>
                 <div style={{ fontWeight: "bold", marginTop: "1px" }}>Diretor de Escola</div>
