@@ -11,7 +11,6 @@ export default function RecipeEditor() {
       endereco: 'Rua Joaquim Marra, 138 - Vila Matilde - CEP 03514-000',
       cidadeUfFone: 'São Paulo - SP - Fone: (11) 2652-2210'
     },
-    via: '1ª',
     paciente: {
       nome: 'Reginaldo marques pereira trindade',
       endereco: 'Rua Antônio fonoff, 11 bairro : Nova espírito santo - Valinhos SP'
@@ -56,16 +55,29 @@ export default function RecipeEditor() {
   const handleSaveDocument = async () => {
     setSaving(true);
     try {
-      await new Promise(r => setTimeout(r, 500));
-      const el = document.getElementById('recipe-document');
-      if (el) {
-        const png = await toPng(el, { quality: 0.95, pixelRatio: 2 });
-        const link = document.createElement('a');
-        link.download = `Receita_Mounjaro_${data.paciente.nome.replace(/\s/g, '_')}.png`;
-        link.href = png;
-        link.click();
+      await new Promise(r => setTimeout(r, 800));
+      
+      const pages = ['recipe-page-1', 'recipe-page-2'];
+      const labels = ['1a_Via', '2a_Via'];
+
+      for (let i = 0; i < pages.length; i++) {
+        const el = document.getElementById(pages[i]);
+        if (el) {
+          const png = await toPng(el, { 
+            quality: 1, 
+            pixelRatio: 3,
+            backgroundColor: 'white'
+          });
+          const link = document.createElement('a');
+          link.download = `Receita_Mounjaro_${labels[i]}_${data.paciente.nome.replace(/\s/g, '_')}.png`;
+          link.href = png;
+          link.click();
+          // Pequeno delay entre downloads
+          await new Promise(r => setTimeout(r, 500));
+        }
       }
-      alert('Receita salva com sucesso!');
+      
+      alert('As duas vias da receita foram geradas com sucesso!');
     } catch (err) {
       console.error('Erro ao gerar imagem:', err);
       alert('Erro ao gerar receita. Tente novamente.');
@@ -84,14 +96,14 @@ export default function RecipeEditor() {
       <div className="bg-[#12121f] border-b border-gray-700 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <a href="/admin" className="text-gray-400 hover:text-white text-sm">← Voltar</a>
-          <h1 className="text-xl font-bold text-blue-400">Editor de Receita Mounjaro</h1>
+          <h1 className="text-xl font-bold text-blue-400">Editor de Receita (2 Vias)</h1>
         </div>
         <button
           onClick={handleSaveDocument}
           disabled={saving}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded disabled:opacity-50"
         >
-          {saving ? 'Gerando...' : '💾 SALVAR RECEITA'}
+          {saving ? 'Gerando Vias...' : '💾 SALVAR 2 VIAS (PNG)'}
         </button>
       </div>
 
@@ -140,17 +152,10 @@ export default function RecipeEditor() {
           <div className={sectionStyle}>
             <h2 className="text-sm font-bold text-gray-300 mb-3">💊 PRESCRIÇÃO</h2>
             <div className="grid grid-cols-1 gap-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className={labelStyle}>Via de Administração</label>
                   <input className={inputStyle} value={data.prescricao.viaAdministracao} onChange={e => updateField('prescricao', 'viaAdministracao', e.target.value)} />
-                </div>
-                <div>
-                  <label className={labelStyle}>Via (1ª ou 2ª)</label>
-                  <select className={inputStyle} value={data.via} onChange={e => updateField('via', '', e.target.value)}>
-                    <option value="1ª">1ª Via</option>
-                    <option value="2ª">2ª Via</option>
-                  </select>
                 </div>
               </div>
               <div>
@@ -228,7 +233,8 @@ export default function RecipeEditor() {
         </div>
 
         {/* Preview */}
-        <div className="sticky top-24 bg-gray-800 p-4 rounded-lg overflow-auto max-h-[calc(100vh-140px)] flex justify-center items-start border border-gray-600">
+        <div className="sticky top-24 bg-gray-900 p-4 rounded-lg overflow-auto max-h-[calc(100vh-140px)] flex flex-col items-center gap-8 border border-gray-700 shadow-2xl">
+          <div className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-2">Visualização em Tempo Real (60% de escala)</div>
           <div style={{ transform: 'scale(0.6)', transformOrigin: 'top center' }}>
             <RecipeDocument data={data} />
           </div>
