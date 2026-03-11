@@ -460,11 +460,11 @@ export default function AdminDashboard() {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-[#0d0d14] border border-[#1a1a2a] rounded-lg p-4 opacity-50 cursor-not-allowed">
+                <button onClick={() => setLocation("/create/recipe")} className="bg-[#0d0d14] border border-[#1a1a2a] rounded-lg p-4 hover:border-blue-500 transition-colors text-left">
                   <div className="text-2xl mb-2">🏥</div>
-                  <h3 className="font-bold text-sm">Atestado Médico</h3>
-                  <p className="text-xs text-[#666] mt-1">Em breve</p>
-                </div>
+                  <h3 className="font-bold text-sm">Receita Médica</h3>
+                  <p className="text-xs text-[#666] mt-1">Receituário Controle Especial - Mounjaro</p>
+                </button>
                 <div className="bg-[#0d0d14] border border-[#1a1a2a] rounded-lg p-4 opacity-50 cursor-not-allowed">
                   <div className="text-2xl mb-2">🚗</div>
                   <h3 className="font-bold text-sm">CRLV</h3>

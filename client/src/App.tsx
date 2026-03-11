@@ -18,6 +18,7 @@ import PublishedTemplateViewer from "./pages/PublishedTemplateViewer";
 import AdminDashboard from "./pages/AdminDashboard";
 import CNHCreator from "./pages/CNHCreator";
 import HistoricoSP from "./pages/HistoricoSP";
+import RecipeEditor from "./pages/RecipeEditor";
 
 function Router() {
   return (
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/template/:id" component={PublishedTemplateViewer} />
       <Route path="/create/cnh" component={CNHCreator} />
       <Route path="/historico-sp" component={HistoricoSP} />
+      <Route path="/create/recipe" component={RecipeEditor} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
