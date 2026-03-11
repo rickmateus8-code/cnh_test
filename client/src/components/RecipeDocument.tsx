@@ -201,7 +201,7 @@ const SinglePage: React.FC<SinglePageProps> = ({ data, via, id }) => {
         {/* Identificação do Fornecedor */}
         <div style={{ ...boxStyle, flex: 1, marginBottom: '0', padding: '8px 10px' }}>
           <div style={boxTitleStyle}>IDENTIFICAÇÃO DO FORNECEDOR</div>
-          <div style={{ height: '80px' }}></div>
+          <div style={{ height: '110px' }}></div>
           <div style={{ borderTop: '1px solid black', textAlign: 'center', fontSize: '10px', marginTop: '8px', paddingTop: '4px' }}>
             Assinatura do Farmacêutico
           </div>
