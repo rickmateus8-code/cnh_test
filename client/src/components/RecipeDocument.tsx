@@ -77,29 +77,26 @@ const SinglePage: React.FC<SinglePageProps> = ({ data, via, id }) => {
   };
 
   // Posições diferentes para o carimbo conforme original
-  const carimboStyle: React.CSSProperties = via === 1 
-    ? {
-        textAlign: 'center',
-        position: 'absolute',
-        left: '25%',
-        bottom: '30%',
-        transform: 'rotate(-6deg)',
-        fontFamily: "'Helvetica', 'Arial', sans-serif",
-        pointerEvents: 'none',
-        userSelect: 'none',
-        zIndex: 10,
-      }
-    : {
-        textAlign: 'center',
-        position: 'absolute',
-        right: '20%',
-        bottom: '35%',
-        transform: 'rotate(8deg)',
-        fontFamily: "'Helvetica', 'Arial', sans-serif",
-        pointerEvents: 'none',
-        userSelect: 'none',
-        zIndex: 10,
-      };
+  const carimboStyle: React.CSSProperties = {
+    textAlign: 'center',
+    position: 'absolute',
+    fontFamily: "'Helvetica', 'Arial', sans-serif",
+    pointerEvents: 'none',
+    userSelect: 'none',
+    zIndex: 10,
+    ...(via === 1 
+      ? {
+          left: '25%',
+          bottom: '30%',
+          transform: 'rotate(-6deg)',
+        }
+      : {
+          right: '20%',
+          bottom: '30%',
+          transform: 'rotate(8deg)',
+        }
+    )
+  };
 
   return (
     <div id={id} style={pageStyle} className="recipe-page">
@@ -148,11 +145,11 @@ const SinglePage: React.FC<SinglePageProps> = ({ data, via, id }) => {
         <div style={{ fontSize: '12px', marginTop: '2px' }}>({data.prescricao.orientacao})</div>
       </div>
 
-      {/* Carimbo Médico */}
+      {/* Carimbo Médico - Tamanho padronizado */}
       <div style={carimboStyle}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{data.medico.nome}</div>
-        <div style={{ fontSize: '14px', fontWeight: 'bold' }}>CRM {data.medico.crm}</div>
-        <div style={{ fontSize: '14px', fontWeight: 'bold' }}>CPF {data.medico.cpf}</div>
+        <div style={{ fontSize: '16px', fontWeight: 'bold', lineHeight: '1.2' }}>{data.medico.nome}</div>
+        <div style={{ fontSize: '14px', fontWeight: 'bold', lineHeight: '1.2' }}>CRM {data.medico.crm}</div>
+        <div style={{ fontSize: '14px', fontWeight: 'bold', lineHeight: '1.2' }}>CPF {data.medico.cpf}</div>
       </div>
 
       {/* Data */}
