@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { toPng } from 'html-to-image';
+import jsPDF from 'jspdf';
 import RecipeDocument, { RecipeData } from '@/components/RecipeDocument';
 
 export default function RecipeEditor() {
@@ -52,35 +53,37 @@ export default function RecipeEditor() {
     });
   };
 
-  const handleSaveDocument = async () => {
+  const handleSavePDF = async () => {
     setSaving(true);
     try {
+      // Pequeno delay para garantir que o DOM está pronto
       await new Promise(r => setTimeout(r, 800));
       
+      const pdf = new jsPDF('p', 'mm', 'a4');
       const pages = ['recipe-page-1', 'recipe-page-2'];
-      const labels = ['1a_Via', '2a_Via'];
 
       for (let i = 0; i < pages.length; i++) {
         const el = document.getElementById(pages[i]);
         if (el) {
+          // Aumentar pixelRatio para alta qualidade
           const png = await toPng(el, { 
             quality: 1, 
-            pixelRatio: 3,
+            pixelRatio: 4,
             backgroundColor: 'white'
           });
-          const link = document.createElement('a');
-          link.download = `Receita_Mounjaro_${labels[i]}_${data.paciente.nome.replace(/\s/g, '_')}.png`;
-          link.href = png;
-          link.click();
-          // Pequeno delay entre downloads
-          await new Promise(r => setTimeout(r, 500));
+
+          if (i > 0) pdf.addPage();
+          pdf.addImage(png, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
         }
       }
       
-      alert('As duas vias da receita foram geradas com sucesso!');
+      const fileName = `RECEITA_ITAL_${data.paciente.nome.toUpperCase().replace(/\s/g, '_')}.pdf`;
+      pdf.save(fileName);
+      
+      alert('PDF gerado com sucesso!');
     } catch (err) {
-      console.error('Erro ao gerar imagem:', err);
-      alert('Erro ao gerar receita. Tente novamente.');
+      console.error('Erro ao gerar PDF:', err);
+      alert('Erro ao gerar PDF. Tente novamente.');
     } finally {
       setSaving(false);
     }
@@ -96,14 +99,14 @@ export default function RecipeEditor() {
       <div className="bg-[#12121f] border-b border-gray-700 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <a href="/admin" className="text-gray-400 hover:text-white text-sm">← Voltar</a>
-          <h1 className="text-xl font-bold text-blue-400">Editor de Receita (2 Vias)</h1>
+          <h1 className="text-xl font-bold text-blue-400">Editor de Receita (Layout Fiel)</h1>
         </div>
         <button
-          onClick={handleSaveDocument}
+          onClick={handleSavePDF}
           disabled={saving}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded disabled:opacity-50"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-2 rounded-full shadow-lg transition-all transform hover:scale-105 disabled:opacity-50"
         >
-          {saving ? 'Gerando Vias...' : '💾 SALVAR 2 VIAS (PNG)'}
+          {saving ? 'Gerando PDF...' : '📄 EXPORTAR PDF'}
         </button>
       </div>
 
@@ -152,11 +155,9 @@ export default function RecipeEditor() {
           <div className={sectionStyle}>
             <h2 className="text-sm font-bold text-gray-300 mb-3">💊 PRESCRIÇÃO</h2>
             <div className="grid grid-cols-1 gap-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className={labelStyle}>Via de Administração</label>
-                  <input className={inputStyle} value={data.prescricao.viaAdministracao} onChange={e => updateField('prescricao', 'viaAdministracao', e.target.value)} />
-                </div>
+              <div>
+                <label className={labelStyle}>Via de Administração</label>
+                <input className={inputStyle} value={data.prescricao.viaAdministracao} onChange={e => updateField('prescricao', 'viaAdministracao', e.target.value)} />
               </div>
               <div>
                 <label className={labelStyle}>Medicamento e Quantidade</label>
@@ -234,8 +235,8 @@ export default function RecipeEditor() {
 
         {/* Preview */}
         <div className="sticky top-24 bg-gray-900 p-4 rounded-lg overflow-auto max-h-[calc(100vh-140px)] flex flex-col items-center gap-8 border border-gray-700 shadow-2xl">
-          <div className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-2">Visualização em Tempo Real (60% de escala)</div>
-          <div style={{ transform: 'scale(0.6)', transformOrigin: 'top center' }}>
+          <div className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-2">Visualização (Layout Final - 2 Vias)</div>
+          <div style={{ transform: 'scale(0.5)', transformOrigin: 'top center' }}>
             <RecipeDocument data={data} />
           </div>
         </div>
